@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-vr-man",
+      "description": "Man using VR goggles for advertising visualization",
+      "imageUrl": "/images/hero-vr.png",
+      "imageHint": "man vr goggles"
+    },
+    {
+      "id": "chart-line-blue",
+      "description": "Blue rising line chart",
+      "imageUrl": "https://picsum.photos/seed/chart-blue/300/100",
+      "imageHint": "line chart"
+    },
+    {
+      "id": "chart-pie-blue",
+      "description": "Blue pie chart",
+      "imageUrl": "https://picsum.photos/seed/chart-pie/100/100",
+      "imageHint": "pie chart"
+    },
+    {
+      "id": "wizard-preview",
+      "description": "Simplified preview of the Orion campaign wizard",
+      "imageUrl": "https://picsum.photos/seed/wizard/1200/800",
+      "imageHint": "dashboard ui"
+    }
+  ]
+}

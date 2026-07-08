@@ -1,0 +1,56 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil do usuário com definição de papel e status operacional.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "USER"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "INACTIVE"] },
+        "provider": { "type": "string" },
+        "lastLogin": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "UserWallet": {
+      "title": "UserWallet",
+      "description": "Dados financeiros do usuário.",
+      "type": "object",
+      "properties": {
+        "balanceVisible": { "type": "number" },
+        "balanceReal": { "type": "number" },
+        "totalInvested": { "type": "number" },
+        "totalCampaigns": { "type": "number" },
+        "walletStatus": { "type": "string" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/UserProfile" },
+      "description": "Dados principais do usuário."
+    },
+    "/users/{userId}/wallet/balance": {
+      "schema": { "$ref": "#/backend/entities/UserWallet" },
+      "description": "Documento único de saldo."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": { "type": "object" },
+      "description": "Coleção de avisos do sistema."
+    },
+    "/users/{userId}/settings/preferences": {
+      "schema": { "type": "object" },
+      "description": "Configurações de interface."
+    }
+  }
+}

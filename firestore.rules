@@ -1,0 +1,78 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Configurações globais: Leitura permitida para o servidor/cliente, escrita apenas Admin
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Coleção de Logs para auditoria: Apenas Admin lê tudo, usuários apenas criam seus logs
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    // Notificações Master: Apenas Admin gerencia
+    match /notifications_master/{notifId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Campanhas: Isolamento rigoroso por userId
+    match /campaigns/{campaignId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAuthenticated() && (isAdmin() || request.query.limit <= 100); 
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      match /platform_metrics/{platformId} {
+        allow read: if isAuthenticated() && (get(/databases/$(database)/documents/campaigns/$(campaignId)).data.userId == request.auth.uid || isAdmin());
+        allow write: if isAdmin();
+      }
+    }
+
+    // Tickets de Suporte: Isolamento por userId
+    match /tickets/{ticketId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Usuários e suas subcoleções: Somente o próprio usuário ou admin
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      // Impedir que um usuário comum altere seu próprio papel (role)
+      allow write: if isAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'internalBalance']));
+      
+      match /notifications/{notifId} {
+        allow read, update: if isOwner(userId) || isAdmin();
+        allow create: if isAdmin() || isOwner(userId);
+        allow delete: if isAdmin() || isOwner(userId);
+      }
+
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+  }
+}
